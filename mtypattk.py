@@ -5,8 +5,10 @@ A typing game where you defend cities by typing words to destroy incoming missil
 """
 
 import pygame
+import pygame.sndarray
 import random
 import math
+import numpy as np
 
 # Word list for typing game
 WORD_LIST = [
@@ -23,6 +25,14 @@ WORD_LIST = [
 
 # Initialize Pygame
 pygame.init()
+
+# Initialize audio mixer
+try:
+    pygame.mixer.quit()  # Quit first in case it's already initialized
+    pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
+    print("Sound system initialized successfully")
+except Exception as e:
+    print(f"Warning: Could not initialize sound system: {e}")
 
 # Constants
 SCREEN_WIDTH = 800
@@ -45,6 +55,97 @@ PLAYER_MISSILE_SPEED = 5
 EXPLOSION_MAX_RADIUS = 60
 EXPLOSION_GROWTH_RATE = 2
 EXPLOSION_DURATION = 45  # frames
+
+
+def generate_sound(frequency, duration, sample_rate=22050, volume=0.3):
+    """Generate a simple tone sound effect"""
+    num_samples = int(duration * sample_rate)
+    t = np.linspace(0, duration, num_samples, False)
+    wave = np.sin(frequency * 2 * np.pi * t)
+    
+    # Apply envelope (fade in/out)
+    envelope = np.ones_like(wave)
+    fade_samples = int(sample_rate * 0.01)  # 10ms fade
+    if len(envelope) > fade_samples * 2:
+        envelope[:fade_samples] = np.linspace(0, 1, fade_samples)
+        envelope[-fade_samples:] = np.linspace(1, 0, fade_samples)
+    
+    wave = wave * envelope * volume
+    
+    # Convert to 16-bit stereo (C-contiguous)
+    wave = (wave * 32767).astype(np.int16)
+    stereo_wave = np.column_stack((wave, wave)).astype(np.int16)
+    
+    sound = pygame.sndarray.make_sound(stereo_wave.copy())
+    return sound
+
+
+def generate_sweep(start_freq, end_freq, duration, sample_rate=22050, volume=0.3):
+    """Generate a frequency sweep sound effect"""
+    num_samples = int(duration * sample_rate)
+    t = np.linspace(0, duration, num_samples, False)
+    
+    # Create frequency sweep
+    freq = np.linspace(start_freq, end_freq, num_samples)
+    phase = np.cumsum(freq * 2 * np.pi / sample_rate)
+    wave = np.sin(phase)
+    
+    # Apply envelope
+    envelope = np.exp(-3 * t / duration)  # Exponential decay
+    wave = wave * envelope * volume
+    
+    # Convert to 16-bit stereo (C-contiguous)
+    wave = (wave * 32767).astype(np.int16)
+    stereo_wave = np.column_stack((wave, wave)).astype(np.int16)
+    
+    sound = pygame.sndarray.make_sound(stereo_wave.copy())
+    return sound
+
+
+def generate_explosion(duration=0.5, sample_rate=22050, volume=0.4):
+    """Generate an explosion sound effect"""
+    num_samples = int(duration * sample_rate)
+    
+    # White noise for explosion
+    wave = np.random.uniform(-1, 1, num_samples)
+    
+    # Apply low-pass filter effect by mixing frequencies
+    t = np.linspace(0, duration, num_samples, False)
+    rumble = np.sin(2 * np.pi * 60 * t) * 0.5
+    wave = wave * 0.7 + rumble * 0.3
+    
+    # Apply exponential decay envelope
+    envelope = np.exp(-4 * t / duration)
+    wave = wave * envelope * volume
+    
+    # Convert to 16-bit stereo (C-contiguous)
+    wave = (wave * 32767).astype(np.int16)
+    stereo_wave = np.column_stack((wave, wave)).astype(np.int16)
+    
+    sound = pygame.sndarray.make_sound(stereo_wave.copy())
+    return sound
+
+
+def generate_hit_sound(duration=0.3, sample_rate=22050, volume=0.5):
+    """Generate a hit/destruction sound effect"""
+    num_samples = int(duration * sample_rate)
+    t = np.linspace(0, duration, num_samples, False)
+    
+    # Combine noise and low frequency thump
+    noise = np.random.uniform(-1, 1, num_samples) * 0.5
+    thump = np.sin(2 * np.pi * 40 * t) * 0.5
+    wave = noise + thump
+    
+    # Sharp attack, quick decay
+    envelope = np.exp(-8 * t / duration)
+    wave = wave * envelope * volume
+    
+    # Convert to 16-bit stereo (C-contiguous)
+    wave = (wave * 32767).astype(np.int16)
+    stereo_wave = np.column_stack((wave, wave)).astype(np.int16)
+    
+    sound = pygame.sndarray.make_sound(stereo_wave.copy())
+    return sound
 
 
 class Explosion:
@@ -220,11 +321,49 @@ class Game:
         self.targeted_missile = None
         self.used_words = set()  # Track words already in play
         
+        # Initialize sound effects
+        self.load_sounds()
+        
         # Initialize game objects
         self.setup_game()
         
         # Set missiles per level
         self.missiles_per_level = 10 + (self.level * 5)
+    
+    def load_sounds(self):
+        """Load/generate sound effects"""
+        try:
+            print("Generating sound effects...")
+            # Generate classic Missile Command style sounds
+            self.sound_fire = generate_sweep(800, 400, 0.15, volume=0.25)  # Launch missile
+            print("  - Fire sound generated")
+            self.sound_explosion = generate_explosion(0.4, volume=0.3)  # Explosion
+            print("  - Explosion sound generated")
+            self.sound_hit = generate_hit_sound(0.3, volume=0.4)  # City/base destroyed
+            print("  - Hit sound generated")
+            self.sound_level = generate_sweep(400, 800, 0.5, volume=0.3)  # Level complete
+            print("  - Level sound generated")
+            self.sound_gameover = generate_sweep(600, 100, 1.0, volume=0.35)  # Game over
+            print("  - Game over sound generated")
+            print("All sounds loaded successfully!")
+        except Exception as e:
+            print(f"Warning: Could not generate sounds: {e}")
+            import traceback
+            traceback.print_exc()
+            # Create silent fallback sounds
+            self.sound_fire = None
+            self.sound_explosion = None
+            self.sound_hit = None
+            self.sound_level = None
+            self.sound_gameover = None
+    
+    def play_sound(self, sound):
+        """Play a sound effect if available"""
+        if sound is not None:
+            try:
+                sound.play()
+            except Exception as e:
+                print(f"Warning: Could not play sound: {e}")
     
     def randomize_colors(self):
         """Randomize enemy missile and city colors"""
@@ -438,6 +577,7 @@ class Game:
         missile = nearest_base.fire(target_x, target_y)
         if missile:
             self.player_missiles.append(missile)
+            self.play_sound(self.sound_fire)  # Play fire sound
     
     def update(self):
         """Update game state"""
@@ -464,6 +604,7 @@ class Game:
             if missile.has_reached_target():
                 self.explosions.append(Explosion(missile.target_x, missile.target_y))
                 self.player_missiles.remove(missile)
+                self.play_sound(self.sound_explosion)  # Play explosion sound
             
             # Remove missiles that go off screen
             elif missile.y < 0 or missile.x < 0 or missile.x > SCREEN_WIDTH:
@@ -497,6 +638,7 @@ class Game:
                     if city.active and abs(city.x - missile.x) < 20:
                         city.active = False
                         self.explosions.append(Explosion(city.x, city.y))
+                        self.play_sound(self.sound_hit)  # Play hit sound
                         break
                 
                 # Check if it hit a base
@@ -504,6 +646,7 @@ class Game:
                     if base.active and abs(base.x - missile.x) < 20:
                         base.active = False
                         self.explosions.append(Explosion(base.x, base.y))
+                        self.play_sound(self.sound_hit)  # Play hit sound
                         break
         
         # Update explosions
@@ -515,6 +658,8 @@ class Game:
         all_cities_destroyed = all(not city.active for city in self.cities)
         
         if all_cities_destroyed:
+            if not self.game_over:  # Only play sound once
+                self.play_sound(self.sound_gameover)  # Play game over sound
             self.game_over = True
         
         # Check for level completion (all missiles spawned and cleared)
@@ -537,6 +682,9 @@ class Game:
             
             # Calculate missiles for next level
             self.missiles_per_level = 10 + (self.level * 5)
+            
+            # Play level complete sound
+            self.play_sound(self.sound_level)
             
             # Flash effect
             self.flash_timer = 20
