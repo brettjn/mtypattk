@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Missile Type Attack</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="game-container">
+    <div id="ui">
+      <div>
+        <span class="label">SCORE</span>
+        <span id="score-val">0</span>
+      </div>
+      <div>
+        <span class="label">LEVEL</span>
+        <span id="level-val">1</span>
+      </div>
+      <div>
+        <span class="label">CITIES</span>
+        <span id="cities-val">6</span>
+      </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="overlay">
+      <h2 id="overlay-title">MISSILE TYPE ATTACK</h2>
+      <p id="overlay-msg">Type words to shoot down incoming missiles before they destroy your cities!</p>
+      <div class="score-display" id="overlay-score"></div>
+      <button id="overlay-btn">START GAME</button>
+    </div>
+  </div>
+
+  <div id="input-area">
+    <label for="word-input">TYPE &gt;</label>
+    <input
+      type="text"
+      id="word-input"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
+      placeholder="type here..."
+    />
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

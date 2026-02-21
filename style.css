@@ -1,0 +1,149 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-family: 'Courier New', Courier, monospace;
+  overflow: hidden;
+  color: #fff;
+}
+
+#game-container {
+  position: relative;
+}
+
+#gameCanvas {
+  display: block;
+  border: 1px solid #333;
+}
+
+#ui {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 16px;
+  pointer-events: none;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+#ui span {
+  color: #4af;
+  text-shadow: 0 0 6px #4af;
+}
+
+#ui .label {
+  color: #666;
+  margin-right: 4px;
+}
+
+#input-area {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#input-area label {
+  color: #4af;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 6px #4af;
+}
+
+#word-input {
+  background: #0a0a1a;
+  border: 1px solid #4af;
+  color: #fff;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 16px;
+  padding: 6px 10px;
+  width: 200px;
+  outline: none;
+  box-shadow: 0 0 8px #4af4;
+  letter-spacing: 2px;
+  text-transform: lowercase;
+}
+
+#word-input:focus {
+  border-color: #8df;
+  box-shadow: 0 0 12px #4af;
+}
+
+#overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+#overlay h1 {
+  font-size: 36px;
+  color: #f44;
+  text-shadow: 0 0 20px #f44, 0 0 40px #f44;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+#overlay h2 {
+  font-size: 22px;
+  color: #4af;
+  text-shadow: 0 0 12px #4af;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+#overlay p {
+  color: #aaa;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+#overlay .score-display {
+  color: #ff0;
+  font-size: 20px;
+  text-shadow: 0 0 10px #ff0;
+  letter-spacing: 2px;
+}
+
+#overlay button {
+  background: transparent;
+  border: 2px solid #4af;
+  color: #4af;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 16px;
+  padding: 10px 32px;
+  cursor: pointer;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px #4af;
+  box-shadow: 0 0 12px #4af4;
+  transition: all 0.15s;
+}
+
+#overlay button:hover {
+  background: #4af2;
+  box-shadow: 0 0 24px #4af;
+}
+
+.hidden {
+  display: none !important;
+}
