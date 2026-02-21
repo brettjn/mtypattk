@@ -315,6 +315,10 @@ class Game {
 
   // ───── Drawing ─────
 
+  draw() {
+    this._draw();
+  }
+
   _draw() {
     const ctx = this.ctx;
     const W = this.canvas.width;
@@ -513,7 +517,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const game = new Game(canvas);
 
   // Draw initial state (title screen background)
-  game._draw();
+  game.draw();
 
   function startGame() {
     game.stop();
@@ -544,10 +548,8 @@ window.addEventListener('DOMContentLoaded', () => {
   wordInput.addEventListener('input', (e) => {
     if (game.running) {
       game.handleInput(e.target.value);
-      if (e.target.value === '') {
-        e.target.value = '';
-      } else if (game.typed === '') {
-        // Word was destroyed, clear input
+      if (game.typed === '') {
+        // Word was destroyed or cleared, reset input
         e.target.value = '';
       }
     }
